@@ -1,1 +1,2 @@
-# fork-sample
+## Readme
+this is sample repogitory.
