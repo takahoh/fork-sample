@@ -1,0 +1,29 @@
+name: Create PR
+
+on:
+  push:
+    tags:
+      - v0.*
+
+jobs:
+  check_create_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo sample
+        run: |
+          echo "This is echo sample"
+          echo "This is echo sample 2"
+      # - name: checkouttt
+      #   uses: actions/checkout@v3
+      #   run: |
+      #     git checkout git@github.com:takahoh/sandbox-tk.git
+      #     git branch -b release/v1.0.0
+      #     git remote add dev git@github.com:takahoh/sandbox.git
+      #     git fetch dev
+      #     git merge --allow-unrelated-histories --squash -s recursive -X theirs dev/main
+      #     git add .
+      #     git commit -m "version x.x.x update"
+      #     git push origin main
+          
+
+
