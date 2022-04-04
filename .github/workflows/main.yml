@@ -1,0 +1,73 @@
+name: Create Release PR
+
+on:
+  push:
+    tags:
+      - v1.*.*
+
+jobs:
+  dev_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          git config --global user.email "takaho.hayashi@salesforce.com"
+          git config --global user.name "takahoh"
+      - name: Checkout dev
+        uses: actions/checkout@v2
+        with:
+          ref: test
+      - name: Create Release Branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git checkout -b release/${{ env.RELEASE_VERSION }}
+      - name: Delete actions yml
+        run: rm -rf ./.github
+      - name: Add
+        run: git add . 
+      - name: Commit
+        run: git commit -m "delete github actions"
+      - name: Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git push origin release/${{ env.RELEASE_VERSION }}
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.PAT }}
+          commit-message: |
+            'Update' ${{ env.RELEASE_VERSION }}
+          branch: release/${{ env.RELEASE_VERSION }}
+          base: test
+          delete-branch: false
+
+  prod_job:
+    needs: dev_job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set tag to env and config
+        run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          git config --global user.email "takaho.hayashi@salesforce.com"
+          git config --global user.name "takahoh"
+      - name: Checkout b2c-japan-package main
+        uses: actions/checkout@v3
+        with:
+          repository: takahoh/fork-sample
+          token: ${{ secrets.PAT }}
+          ref: main
+      - name: Create release branch
+        run: git checkout -b release/${{ env.RELEASE_VERSION }}
+      - name: Add Remote b2c-japan-package-dev
+        run: |
+          git remote add dev https://github.com/takahoh/sandbox.git
+          git fetch dev
+      - name: Merge
+        run: |
+          git merge --allow-unrelated-histories --squash -s recursive -X theirs dev/release/${{ env.RELEASE_VERSION }}
+      - name: Add Commit Push
+        run: |
+          git add .
+          git commit -m "${{ env.RELEASE_VERSION }} update"
+          git push origin release/${{ env.RELEASE_VERSION }}
